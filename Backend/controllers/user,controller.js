@@ -45,10 +45,20 @@ module.exports.loginUser = async (req, res, next) => {
     }
 
     const token = user.generateAuthToken();
+    res.cookie('token', token,{
+        httpOnly:true,
+        secure:process.env.NODE_ENV === 'production',
+        maxAge:3600000
+    })
 
     res.status(200).json({ user, token });
 };
 
 module.exports.getUserProfile = async (req,res,next) =>{
+    res.clearCookie('token');
+    const token = req.cookies.token|| req.header.authorization.split(' ')[1];
+    if(!token){
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
     res.status(200).json({ user: req.user });
 }

@@ -10,6 +10,12 @@ model.exports.authUser = async (req,res,next) =>{
         return res.status(401).json({ error: 'Access denied. No token provided.' });
     }
 
+    const isBlacklisted = await userModel.findOne({isBlacklistedToken: token});
+    
+    if(isBlacklisted){
+        return res.status(401).json({ error: 'Token is blacklisted. Please login again.' });
+    }
+
     try {
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
