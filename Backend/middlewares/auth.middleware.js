@@ -10,9 +10,9 @@ model.exports.authUser = async (req,res,next) =>{
         return res.status(401).json({ error: 'Access denied. No token provided.' });
     }
 
-    const isBlacklisted = await userModel.findOne({isBlacklistedToken: token});
-    
-    if(isBlacklisted){
+    const isBlacklisted = await blacklistTokenModel.findOne({ token: token });
+
+    if (isBlacklisted) {
         return res.status(401).json({ error: 'Token is blacklisted. Please login again.' });
     }
 
