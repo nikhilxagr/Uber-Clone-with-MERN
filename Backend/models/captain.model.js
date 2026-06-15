@@ -1,8 +1,8 @@
-const moongoose = require("mongoose");
+const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const captainSchema = new moongoose.Schema(
+const captainSchema = new mongoose.Schema(
   {
     fullname: {
       type: String,
@@ -14,6 +14,7 @@ const captainSchema = new moongoose.Schema(
       required: true,
       unique: true,
       lowercase: true,
+      trim: true,
       match: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
     },
     password: {
@@ -23,7 +24,6 @@ const captainSchema = new moongoose.Schema(
     },
     phone: {
       type: String,
-      required: true,
       match: /^\d{10}$/,
     },
     socketId: {
@@ -67,7 +67,16 @@ const captainSchema = new moongoose.Schema(
       },
     },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+    toJSON: {
+      transform: (doc, ret) => {
+        delete ret.password;
+        delete ret.__v;
+        return ret;
+      },
+    },
+  },
 );
 
 captainSchema.methods.generateAuthToken = function () {
@@ -81,11 +90,11 @@ captainSchema.methods.comparePassword = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
-captainSchema.static.hashPassword = async function (password) {
+captainSchema.statics.hashPassword = async function (password) {
   const salt = await bcrypt.genSalt(10);
   return await bcrypt.hash(password, salt);
 };
 
-const caoptainModel = moongoose.model("Captain", captainSchema);
+const captainModel = mongoose.model("Captain", captainSchema);
 
-module.exports = caoptainModel;
+module.exports = captainModel;
