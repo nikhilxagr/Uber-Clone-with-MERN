@@ -4,7 +4,6 @@ import UserSignup from './pages/UserSignup'
 import CaptainLogin from './pages/captainLogin'
 import CaptainSignup from './pages/captainSignup'
 import {  Routes, Route } from 'react-router-dom'
-import './App.css'
 
 const App = () => {
   return (
