@@ -19,7 +19,6 @@
     "express": "^5.2.1",
     "express-validator": "^7.3.2",
     "jsonwebtoken": "^9.0.3",
-    "mongodb-memory-server": "^11.2.0",
     "mongoose": "^9.6.3"
   }
 }
