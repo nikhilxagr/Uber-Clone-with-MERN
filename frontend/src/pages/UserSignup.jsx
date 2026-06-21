@@ -17,12 +17,9 @@ const UserSignup = () => {
   const submitHandler = async (e) => {
     e.preventDefault();
     const newUser = {
-      fullname: {
-        firstname: firstName,
-        lastname: lastName,
-      },
-      email: email,
-      password: password,
+      fullName: `${firstName} ${lastName}`,
+      email,
+      password,
     };
 
     const response = await axios.post(

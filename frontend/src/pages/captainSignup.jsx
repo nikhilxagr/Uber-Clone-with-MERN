@@ -22,17 +22,14 @@ const CaptainSignup = () => {
   const submitHandler = async (e) => {
     e.preventDefault();
     const captainData = {
-      fullname: {
-        firstname: firstName,
-        lastname: lastName,
-      },
-      email: email,
-      password: password,
+      fullname: `${firstName} ${lastName}`,
+      email,
+      password,
       vehicle: {
         color: vehicleColor,
         plate: vehiclePlate,
-        capacity: vehicleCapacity,
-        vehicleType: vehicleType,
+        capacity: Number(vehicleCapacity),
+        vehicleType,
       },
     };
 
@@ -171,7 +168,7 @@ const CaptainSignup = () => {
               </option>
               <option value="car">Car</option>
               <option value="auto">Auto</option>
-              <option value="moto">Moto</option>
+              <option value="bike">Moto</option>
             </select>
           </div>
 
