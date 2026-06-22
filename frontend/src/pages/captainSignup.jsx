@@ -22,14 +22,17 @@ const CaptainSignup = () => {
   const submitHandler = async (e) => {
     e.preventDefault();
     const captainData = {
-      fullname: `${firstName} ${lastName}`,
-      email,
-      password,
+      fullname: {
+        firstname: firstName,
+        lastname: lastName,
+      },
+      email: email,
+      password: password,
       vehicle: {
         color: vehicleColor,
         plate: vehiclePlate,
-        capacity: Number(vehicleCapacity),
-        vehicleType,
+        capacity: vehicleCapacity,
+        vehicleType: vehicleType,
       },
     };
 
@@ -168,7 +171,7 @@ const CaptainSignup = () => {
               </option>
               <option value="car">Car</option>
               <option value="auto">Auto</option>
-              <option value="bike">Moto</option>
+              <option value="moto">Moto</option>
             </select>
           </div>
 
@@ -184,7 +187,7 @@ const CaptainSignup = () => {
         </p>
       </div>
       <div>
-        <p className="text-[10px] leading-tight">
+        <p className="text-[10px] mt-6 leading-tight">
           This site is protected by reCAPTCHA and the{" "}
           <span className="underline">Google Privacy Policy</span> and{" "}
           <span className="underline">Terms of Service apply</span>.
