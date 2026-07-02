@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import { useContext } from "react";
 import { CaptainDataContext } from "../context/CapatainContext";
 
 const CaptainDetails = () => {
@@ -14,7 +14,9 @@ const CaptainDetails = () => {
             alt=""
           />
           <h4 className="text-lg font-medium capitalize">
-            {captain.fullname.firstname + " " + captain.fullname.lastname}
+            {captain
+              ? `${captain.fullname.firstname} ${captain.fullname.lastname || ""}`
+              : "Captain"}
           </h4>
         </div>
         <div>

@@ -72,15 +72,43 @@ module.exports.getAutoCompleteSuggestions = async (input) => {
 };
 
 module.exports.getCaptainsInTheRadius = async (ltd, lng, radius) => {
-  // radius in km
+  const pickupLat = Number(ltd);
+  const pickupLng = Number(lng);
+
+  if (!Number.isFinite(pickupLat) || !Number.isFinite(pickupLng)) {
+    throw new Error("Invalid pickup coordinates");
+  }
 
   const captains = await captainModel.find({
-    location: {
-      $geoWithin: {
-        $centerSphere: [[ltd, lng], radius / 6371],
-      },
-    },
+    socketId: { $exists: true, $ne: null },
+    "location.ltd": { $exists: true },
+    "location.lng": { $exists: true },
   });
 
-  return captains;
+  return captains.filter((captain) => {
+    const captainLat = Number(captain.location?.ltd);
+    const captainLng = Number(captain.location?.lng);
+
+    if (!Number.isFinite(captainLat) || !Number.isFinite(captainLng)) {
+      return false;
+    }
+
+    return getDistanceInKm(pickupLat, pickupLng, captainLat, captainLng) <= radius;
+  });
 };
+
+function getDistanceInKm(lat1, lng1, lat2, lng2) {
+  const toRadians = (degree) => (degree * Math.PI) / 180;
+  const earthRadiusKm = 6371;
+  const dLat = toRadians(lat2 - lat1);
+  const dLng = toRadians(lng2 - lng1);
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRadians(lat1)) *
+      Math.cos(toRadians(lat2)) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+
+  return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}

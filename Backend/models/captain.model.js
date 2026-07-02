@@ -55,7 +55,7 @@ const captainSchema = new mongoose.Schema({
     vehicleType: {
       type: String,
       required: true,
-      enum: ["car", "motorcycle", "auto"],
+      enum: ["car", "moto", "auto"],
     },
   },
 
@@ -84,6 +84,6 @@ captainSchema.statics.hashPassword = async function (password) {
   return await bcrypt.hash(password, 10);
 };
 
-const captainModel = mongoose.model("captain", captainSchema);
+const captainModel = mongoose.model("Captain", captainSchema);
 
 module.exports = captainModel;

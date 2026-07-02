@@ -19,8 +19,12 @@ function initializeSocket(server) {
       const { userId, userType } = data;
 
       if (userType === "user") {
+        socket.data.userId = userId;
+        socket.data.userType = userType;
         await userModel.findByIdAndUpdate(userId, { socketId: socket.id });
       } else if (userType === "captain") {
+        socket.data.userId = userId;
+        socket.data.userType = userType;
         await captainModel.findByIdAndUpdate(userId, { socketId: socket.id });
       }
     });
@@ -28,19 +32,32 @@ function initializeSocket(server) {
     socket.on("update-location-captain", async (data) => {
       const { userId, location } = data;
 
-      if (!location || !location.ltd || !location.lng) {
+      const ltd = Number(location?.ltd);
+      const lng = Number(location?.lng);
+
+      if (!Number.isFinite(ltd) || !Number.isFinite(lng)) {
         return socket.emit("error", { message: "Invalid location data" });
       }
 
       await captainModel.findByIdAndUpdate(userId, {
         location: {
-          ltd: location.ltd,
-          lng: location.lng,
+          ltd,
+          lng,
         },
       });
     });
 
-    socket.on("disconnect", () => {
+    socket.on("disconnect", async () => {
+      const { userId, userType } = socket.data;
+
+      if (userId && userType === "user") {
+        await userModel.findByIdAndUpdate(userId, { $unset: { socketId: "" } });
+      } else if (userId && userType === "captain") {
+        await captainModel.findByIdAndUpdate(userId, {
+          $unset: { socketId: "" },
+        });
+      }
+
       console.log(`Client disconnected: ${socket.id}`);
     });
   });

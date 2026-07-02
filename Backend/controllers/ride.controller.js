@@ -10,7 +10,7 @@ module.exports.createRide = async (req, res) => {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { userId, pickup, destination, vehicleType } = req.body;
+  const { pickup, destination, vehicleType } = req.body;
 
   try {
     const ride = await rideService.createRide({
@@ -19,28 +19,35 @@ module.exports.createRide = async (req, res) => {
       destination,
       vehicleType,
     });
-    res.status(201).json(ride);
 
-    const pickupCoordinates = await mapService.getAddressCoordinate(pickup);
+    try {
+      const pickupCoordinates = await mapService.getAddressCoordinate(pickup);
 
-    const captainsInRadius = await mapService.getCaptainsInTheRadius(
-      pickupCoordinates.ltd,
-      pickupCoordinates.lng,
-      2,
-    );
+      const captainsInRadius = await mapService.getCaptainsInTheRadius(
+        pickupCoordinates.ltd,
+        pickupCoordinates.lng,
+        2,
+      );
 
-    ride.otp = "";
+      const rideWithUser = await rideModel
+        .findOne({ _id: ride._id })
+        .populate("user");
 
-    const rideWithUser = await rideModel
-      .findOne({ _id: ride._id })
-      .populate("user");
+      captainsInRadius.forEach((captain) => {
+        if (!captain.socketId) {
+          return;
+        }
 
-    captainsInRadius.map((captain) => {
-      sendMessageToSocketId(captain.socketId, {
-        event: "new-ride",
-        data: rideWithUser,
+        sendMessageToSocketId(captain.socketId, {
+          event: "new-ride",
+          data: rideWithUser,
+        });
       });
-    });
+    } catch (notificationError) {
+      console.error("Unable to notify nearby captains:", notificationError.message);
+    }
+
+    return res.status(201).json(ride);
   } catch (err) {
     console.log(err);
     return res.status(500).json({ message: err.message });
@@ -137,5 +144,4 @@ module.exports.endRide = async (req, res) => {
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
-  s;
 };

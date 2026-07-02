@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import axios from "axios";
@@ -9,7 +9,6 @@ import ConfirmRide from "../components/ConfirmRide";
 import LookingForDriver from "../components/LookingForDriver";
 import WaitingForDriver from "../components/WaitingForDriver";
 import { SocketContext } from "../context/SocketContext";
-import { useContext } from "react";
 import { UserDataContext } from "../context/UserContext";
 import { useNavigate } from "react-router-dom";
 import LiveTracking from "../components/LiveTracking";
@@ -41,20 +40,33 @@ const Home = () => {
   const { user } = useContext(UserDataContext);
 
   useEffect(() => {
+    if (!user?._id) {
+      return;
+    }
+
     socket.emit("join", { userType: "user", userId: user._id });
-  }, [user]);
+  }, [socket, user?._id]);
 
-  socket.on("ride-confirmed", (ride) => {
-    setVehicleFound(false);
-    setWaitingForDriver(true);
-    setRide(ride);
-  });
+  useEffect(() => {
+    const handleRideConfirmed = (confirmedRide) => {
+      setVehicleFound(false);
+      setWaitingForDriver(true);
+      setRide(confirmedRide);
+    };
 
-  socket.on("ride-started", (ride) => {
-    console.log("ride");
-    setWaitingForDriver(false);
-    navigate("/riding", { state: { ride } }); // Updated navigate to include ride data
-  });
+    const handleRideStarted = (startedRide) => {
+      setWaitingForDriver(false);
+      navigate("/riding", { state: { ride: startedRide } });
+    };
+
+    socket.on("ride-confirmed", handleRideConfirmed);
+    socket.on("ride-started", handleRideStarted);
+
+    return () => {
+      socket.off("ride-confirmed", handleRideConfirmed);
+      socket.off("ride-started", handleRideStarted);
+    };
+  }, [navigate, socket]);
 
   const handlePickupChange = async (e) => {
     setPickup(e.target.value);
@@ -212,6 +224,8 @@ const Home = () => {
         },
       },
     );
+
+    setRide(response.data);
   }
 
   return (
