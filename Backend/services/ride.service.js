@@ -199,3 +199,59 @@ module.exports.endRide = async ({ rideId, captain }) => {
 
   return updatedRide;
 };
+
+module.exports.makePayment = async ({ rideId, paymentMethod, paymentID }) => {
+  if (!rideId) {
+    throw new Error("Ride ID is required");
+  }
+
+  const generatedPaymentID = paymentID || `PAY_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+
+  const ride = await rideModel
+    .findByIdAndUpdate(
+      rideId,
+      {
+        paymentID: generatedPaymentID,
+        orderId: `ORD_${Date.now()}`,
+        signature: `SIG_${Math.floor(Math.random() * 1000000)}`,
+      },
+      { new: true }
+    )
+    .populate("user")
+    .populate("captain");
+
+  return ride;
+};
+
+module.exports.getUserRides = async (userId) => {
+  return await rideModel
+    .find({ user: userId })
+    .populate("captain")
+    .sort({ _id: -1 });
+};
+
+module.exports.getCaptainRides = async (captainId) => {
+  return await rideModel
+    .find({ captain: captainId })
+    .populate("user")
+    .sort({ _id: -1 });
+};
+
+const reviewModel = require("../models/review.model");
+
+module.exports.createReview = async ({ rideId, userId, captainId, rating, feedback }) => {
+  if (!rideId || !rating) {
+    throw new Error("Ride ID and rating are required");
+  }
+
+  const review = await reviewModel.create({
+    ride: rideId,
+    user: userId,
+    captain: captainId,
+    rating,
+    feedback,
+  });
+
+  return review;
+};
+

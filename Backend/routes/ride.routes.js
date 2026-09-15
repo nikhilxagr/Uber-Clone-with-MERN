@@ -61,4 +61,32 @@ router.post(
   rideController.endRide,
 );
 
+router.post(
+  "/make-payment",
+  authMiddleware.authUser,
+  body("rideId").isMongoId().withMessage("Invalid ride id"),
+  rideController.makePayment,
+);
+
+router.get(
+  "/user-rides",
+  authMiddleware.authUser,
+  rideController.getUserRides,
+);
+
+router.get(
+  "/captain-rides",
+  authMiddleware.authCaptain,
+  rideController.getCaptainRides,
+);
+
+router.post(
+  "/rate-ride",
+  authMiddleware.authUser,
+  body("rideId").isMongoId().withMessage("Invalid ride id"),
+  body("captainId").isMongoId().withMessage("Invalid captain id"),
+  body("rating").isInt({ min: 1, max: 5 }).withMessage("Rating must be between 1 and 5"),
+  rideController.createReview,
+);
+
 module.exports = router;

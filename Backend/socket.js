@@ -30,7 +30,7 @@ function initializeSocket(server) {
     });
 
     socket.on("update-location-captain", async (data) => {
-      const { userId, location } = data;
+      const { userId, location, riderSocketId } = data;
 
       const ltd = Number(location?.ltd);
       const lng = Number(location?.lng);
@@ -44,7 +44,15 @@ function initializeSocket(server) {
           ltd,
           lng,
         },
+        locationGeo: {
+          type: "Point",
+          coordinates: [lng, ltd],
+        },
       });
+
+      if (riderSocketId && io) {
+        io.to(riderSocketId).emit("driver-location-updated", { ltd, lng });
+      }
     });
 
     socket.on("disconnect", async () => {
