@@ -10,7 +10,15 @@ module.exports.registerUser = async (req, res, next) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { fullName, email, password } = req.body;
+    let fullName = req.body.fullName;
+    if (!fullName && req.body.fullname) {
+      if (typeof req.body.fullname === "object") {
+        fullName = `${req.body.fullname.firstname || ""} ${req.body.fullname.lastname || ""}`.trim();
+      } else {
+        fullName = req.body.fullname;
+      }
+    }
+    const { email, password } = req.body;
 
     const existingUser = await userModel.findOne({ email });
     if (existingUser) {

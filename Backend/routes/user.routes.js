@@ -6,7 +6,13 @@ const authMiddleware = require('../middlewares/auth.middleware');
 
 
 router.post('/register', [
-    body('fullName').trim().isLength({ min: 3 }).withMessage('Full name must be at least 3 characters long'),
+    body().custom((value, { req }) => {
+      const name = req.body.fullName || (req.body.fullname ? (typeof req.body.fullname === 'object' ? `${req.body.fullname.firstname || ''} ${req.body.fullname.lastname || ''}`.trim() : req.body.fullname) : '');
+      if (!name || name.length < 3) {
+        throw new Error('Full name must be at least 3 characters long');
+      }
+      return true;
+    }),
     body('email').isEmail().withMessage('Valid email is required'),
     body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long')
 ], usercontroller.registerUser);

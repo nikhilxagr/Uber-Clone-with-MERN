@@ -1,15 +1,49 @@
-import { useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import FinishRide from "../components/FinishRide";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import LiveTracking from "../components/LiveTracking";
+import { SocketContext } from "../context/SocketContext";
+import { CaptainDataContext } from "../context/CaptainContext";
 
 const CaptainRiding = () => {
   const [finishRidePanel, setFinishRidePanel] = useState(false);
   const finishRidePanelRef = useRef(null);
   const location = useLocation();
   const rideData = location.state?.ride;
+
+  const { socket } = useContext(SocketContext);
+  const { captain } = useContext(CaptainDataContext);
+  const [driverLocation, setDriverLocation] = useState(null);
+
+  useEffect(() => {
+    if (!captain?._id) return;
+
+    const updateLocation = () => {
+      if (!navigator.geolocation) return;
+
+      navigator.geolocation.getCurrentPosition((position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setDriverLocation({ lat, lng });
+
+        socket.emit("update-location-captain", {
+          userId: captain._id,
+          riderSocketId: rideData?.user?.socketId,
+          location: {
+            ltd: lat,
+            lng: lng,
+          },
+        });
+      });
+    };
+
+    updateLocation();
+    const locationInterval = setInterval(updateLocation, 4000);
+
+    return () => clearInterval(locationInterval);
+  }, [captain?._id, socket, rideData?.user?.socketId]);
 
   useGSAP(
     function () {
@@ -73,6 +107,7 @@ const CaptainRiding = () => {
           destination={rideData?.destination}
           pickupCoords={rideData?.pickupCoordinates}
           destCoords={rideData?.destinationCoordinates}
+          driverLocation={driverLocation}
         />
       </div>
     </div>

@@ -1,27 +1,34 @@
 const mongoose = require("mongoose");
 let connectionPromise;
 
-function connectToDb() {
+function connectToDb(retries = 5, delay = 3000) {
   if (connectionPromise) {
     return connectionPromise;
   }
 
-  connectionPromise = (async () => {
+  const attemptConnect = async (remaining) => {
     const uri = process.env.MONGODB_URI;
 
     if (!uri) {
-      throw new Error("MONGODB_URI is missing in Backend/.env");
+      console.error("❌ MONGODB_URI is missing in Backend/.env");
+      return;
     }
 
-    await mongoose.connect(uri);
-    console.log("✅Connected to MongoDB");
-    return mongoose.connection;
-  })().catch((err) => {
-    console.error("Error connecting to MongoDB:", err.message);
-    connectionPromise = null;
-    throw err;
-  });
+    try {
+      await mongoose.connect(uri);
+      console.log("✅ Connected to MongoDB");
+      return mongoose.connection;
+    } catch (err) {
+      console.error("❌ Error connecting to MongoDB:", err.message);
+      connectionPromise = null;
+      if (remaining > 0) {
+        console.log(`🔄 Retrying MongoDB connection in ${delay / 1000}s... (${remaining} attempts left)`);
+        setTimeout(() => attemptConnect(remaining - 1), delay);
+      }
+    }
+  };
 
+  connectionPromise = attemptConnect(retries);
   return connectionPromise;
 }
 

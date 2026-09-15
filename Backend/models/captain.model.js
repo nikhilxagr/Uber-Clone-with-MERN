@@ -71,7 +71,6 @@ const captainSchema = new mongoose.Schema({
     type: {
       type: String,
       enum: ["Point"],
-      default: "Point",
     },
     coordinates: {
       type: [Number], // [lng, lat]
@@ -79,7 +78,22 @@ const captainSchema = new mongoose.Schema({
   },
 });
 
-captainSchema.index({ locationGeo: "2dsphere" });
+captainSchema.pre("save", function () {
+  if (
+    this.location &&
+    Number.isFinite(Number(this.location.ltd)) &&
+    Number.isFinite(Number(this.location.lng))
+  ) {
+    this.locationGeo = {
+      type: "Point",
+      coordinates: [Number(this.location.lng), Number(this.location.ltd)],
+    };
+  } else {
+    this.locationGeo = undefined;
+  }
+});
+
+captainSchema.index({ locationGeo: "2dsphere" }, { sparse: true });
 
 captainSchema.methods.generateAuthToken = function () {
   const token = jwt.sign({ _id: this._id }, process.env.JWT_SECRET, {

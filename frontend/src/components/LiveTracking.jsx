@@ -247,8 +247,12 @@ const LiveTracking = ({ pickup, destination, driverLocation, pickupCoords, destC
         }).addTo(map);
         markersRef.current.driver = driverMarker;
       }
+
+      if (!pickup && !destination) {
+        map.panTo(driverPos);
+      }
     }
-  }, [driverLocation]);
+  }, [driverLocation, pickup, destination]);
 
   return (
     <div

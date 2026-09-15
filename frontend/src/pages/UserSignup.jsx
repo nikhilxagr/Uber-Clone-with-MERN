@@ -20,8 +20,13 @@ const UserSignup = () => {
     setIsSubmitting(true);
 
     try {
+      const formattedFullName = `${firstName} ${lastName}`.trim();
       const newUser = {
-        fullName: `${firstName} ${lastName}`,
+        fullName: formattedFullName,
+        fullname: {
+          firstname: firstName,
+          lastname: lastName,
+        },
         email,
         password,
       };

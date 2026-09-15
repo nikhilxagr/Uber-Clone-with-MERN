@@ -7,12 +7,14 @@ import gsap from "gsap";
 import ConfirmRidePopUp from "../components/ConfirmRidePopUp";
 import { SocketContext } from "../context/SocketContext";
 import { CaptainDataContext } from "../context/CaptainContext";
+import LiveTracking from "../components/LiveTracking";
 import axios from "axios";
 
 const CaptainHome = () => {
   const [ridePopupPanel, setRidePopupPanel] = useState(false);
   const [confirmRidePopupPanel, setConfirmRidePopupPanel] = useState(false);
   const [ride, setRide] = useState(null);
+  const [driverLocation, setDriverLocation] = useState(null);
 
   const ridePopupPanelRef = useRef(null);
   const confirmRidePopupPanelRef = useRef(null);
@@ -36,21 +38,26 @@ const CaptainHome = () => {
       }
 
       navigator.geolocation.getCurrentPosition((position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setDriverLocation({ lat, lng });
+
         socket.emit("update-location-captain", {
           userId: captain._id,
+          riderSocketId: ride?.user?.socketId,
           location: {
-            ltd: position.coords.latitude,
-            lng: position.coords.longitude,
+            ltd: lat,
+            lng: lng,
           },
         });
       });
     };
 
     updateLocation();
-    const locationInterval = setInterval(updateLocation, 10000);
+    const locationInterval = setInterval(updateLocation, 4000);
 
     return () => clearInterval(locationInterval);
-  }, [captain?._id, socket]);
+  }, [captain?._id, socket, ride?.user?.socketId]);
 
   useEffect(() => {
     const handleNewRide = (data) => {
@@ -119,13 +126,13 @@ const CaptainHome = () => {
 
   return (
     <div className="h-screen">
-      <div className="fixed p-6 top-0 flex items-center justify-between w-screen">
+      <div className="fixed p-6 top-0 flex items-center justify-between w-screen z-20 pointer-events-none">
         <img
-          className="w-16"
+          className="w-16 pointer-events-auto"
           src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png"
           alt=""
         />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 pointer-events-auto">
           <Link
             to="/captain-history"
             className="h-10 px-3 bg-white shadow-md flex items-center justify-center rounded-full text-xs font-semibold text-gray-800 hover:bg-gray-100 transition"
@@ -140,12 +147,8 @@ const CaptainHome = () => {
           </Link>
         </div>
       </div>
-      <div className="h-3/5">
-        <img
-          className="h-full w-full object-cover"
-          src="https://miro.medium.com/v2/resize:fit:1400/0*gwMx05pqII5hbfmX.gif"
-          alt=""
-        />
+      <div className="h-3/5 relative z-0">
+        <LiveTracking driverLocation={driverLocation} />
       </div>
       <div className="h-2/5 p-6">
         <CaptainDetails />
