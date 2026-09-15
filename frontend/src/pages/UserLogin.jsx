@@ -1,63 +1,74 @@
-import React, { useState, useContext } from "react";
-import { Link } from "react-router-dom";
+import { useState, useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { UserDataContext } from "../context/UserContext";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const UserLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [userData, setUserData] = useState({});
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { user, setUser } = useContext(UserDataContext);
+  const { setUser } = useContext(UserDataContext);
   const navigate = useNavigate();
 
   const submitHandler = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
+    setIsSubmitting(true);
 
-    const userData = {
-      email: email,
-      password: password,
-    };
+    try {
+      const userData = {
+        email: email,
+        password: password,
+      };
 
-    const response = await axios.post(
-      `${import.meta.env.VITE_BASE_URL}/users/login`,
-      userData,
-    );
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/users/login`,
+        userData
+      );
 
-    if (response.status === 200) {
-      const data = response.data;
-      setUser(data.user);
-      localStorage.setItem("token", data.token);
-      navigate("/home");
+      if (response.status === 200) {
+        const data = response.data;
+        setUser(data.user);
+        localStorage.setItem("token", data.token);
+        navigate("/home");
+      }
+    } catch (err) {
+      console.error(err);
+      setErrorMessage(
+        err.response?.data?.error ||
+          err.response?.data?.message ||
+          "Invalid email or password"
+      );
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setEmail("");
-    setPassword("");
   };
 
   return (
-    <div className="p-7 h-screen flex flex-col justify-between">
+    <div className="p-7 h-screen flex flex-col justify-between max-w-md mx-auto">
       <div>
         <img
-          className="w-16 mb-10"
+          className="w-16 mb-8"
           src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQYQy-OIkA6In0fTvVwZADPmFFibjmszu2A0g&s"
-          alt=""
+          alt="Uber"
         />
 
-        <form
-          onSubmit={(e) => {
-            submitHandler(e);
-          }}
-        >
+        {errorMessage && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-6 flex items-center gap-2">
+            <i className="ri-error-warning-line text-lg"></i>
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
+        <form onSubmit={submitHandler}>
           <h3 className="text-lg font-medium mb-2">What's your email</h3>
           <input
             required
             value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-            }}
-            className="bg-[#eeeeee] mb-7 rounded-lg px-4 py-2 border w-full text-lg placeholder:text-base"
+            onChange={(e) => setEmail(e.target.value)}
+            className="bg-[#eeeeee] mb-7 rounded-lg px-4 py-3 border w-full text-lg placeholder:text-base focus:outline-none focus:border-black"
             type="email"
             placeholder="email@example.com"
           />
@@ -65,23 +76,30 @@ const UserLogin = () => {
           <h3 className="text-lg font-medium mb-2">Enter Password</h3>
 
           <input
-            className="bg-[#eeeeee] mb-7 rounded-lg px-4 py-2 border w-full text-lg placeholder:text-base"
+            className="bg-[#eeeeee] mb-7 rounded-lg px-4 py-3 border w-full text-lg placeholder:text-base focus:outline-none focus:border-black"
             value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-            }}
+            onChange={(e) => setPassword(e.target.value)}
             required
             type="password"
             placeholder="password"
           />
 
-          <button className="bg-[#111] text-white font-semibold mb-3 rounded-lg px-4 py-2 w-full text-lg placeholder:text-base">
-            Login
+          <button
+            disabled={isSubmitting}
+            className="bg-[#111] text-white font-semibold mb-3 rounded-lg px-4 py-3 w-full text-lg transition hover:bg-gray-800 flex items-center justify-center gap-2"
+          >
+            {isSubmitting ? (
+              <>
+                <i className="ri-loader-4-line animate-spin"></i> Logging in...
+              </>
+            ) : (
+              "Login"
+            )}
           </button>
         </form>
-        <p className="text-center">
+        <p className="text-center text-sm text-gray-600">
           New here?{" "}
-          <Link to="/signup" className="text-blue-600">
+          <Link to="/signup" className="text-blue-600 font-medium hover:underline">
             Create new Account
           </Link>
         </p>
@@ -89,7 +107,7 @@ const UserLogin = () => {
       <div>
         <Link
           to="/captain-login"
-          className="bg-[#10b461] flex items-center justify-center text-white font-semibold mb-5 rounded-lg px-4 py-2 w-full text-lg placeholder:text-base"
+          className="bg-[#10b461] hover:bg-emerald-600 flex items-center justify-center text-white font-semibold mb-5 rounded-lg px-4 py-3 w-full text-lg transition"
         >
           Sign in as Captain
         </Link>

@@ -68,7 +68,7 @@ User registration, login, token generation, request validation, and a simple roo
 ### Example `.env`
 
 ```env
-PORT=3000
+PORT=4000
 MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret
 ```

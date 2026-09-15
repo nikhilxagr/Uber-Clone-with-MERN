@@ -1,4 +1,3 @@
-import React, { useContext } from "react";
 import { Route, Routes } from "react-router-dom";
 import Start from "./pages/Start";
 import UserLogin from "./pages/UserLogin";
@@ -13,6 +12,8 @@ import CaptainProtectWrapper from "./pages/CaptainProtectWrapper";
 import CaptainLogout from "./pages/CaptainLogout";
 import Riding from "./pages/Riding";
 import CaptainRiding from "./pages/CaptainRiding";
+import RideHistory from "./pages/RideHistory";
+import AdminDashboard from "./pages/AdminDashboard";
 import "remixicon/fonts/remixicon.css";
 
 const App = () => {
@@ -21,8 +22,22 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Start />} />
         <Route path="/login" element={<UserLogin />} />
-        <Route path="/riding" element={<Riding />} />
-        <Route path="/captain-riding" element={<CaptainRiding />} />
+        <Route
+          path="/riding"
+          element={
+            <UserProtectWrapper>
+              <Riding />
+            </UserProtectWrapper>
+          }
+        />
+        <Route
+          path="/captain-riding"
+          element={
+            <CaptainProtectWrapper>
+              <CaptainRiding />
+            </CaptainProtectWrapper>
+          }
+        />
 
         <Route path="/signup" element={<UserSignup />} />
         <Route path="/captain-login" element={<Captainlogin />} />
@@ -35,6 +50,23 @@ const App = () => {
             </UserProtectWrapper>
           }
         />
+        <Route
+          path="/history"
+          element={
+            <UserProtectWrapper>
+              <RideHistory userType="user" />
+            </UserProtectWrapper>
+          }
+        />
+        <Route
+          path="/captain-history"
+          element={
+            <CaptainProtectWrapper>
+              <RideHistory userType="captain" />
+            </CaptainProtectWrapper>
+          }
+        />
+        <Route path="/admin" element={<AdminDashboard />} />
         <Route
           path="/user/logout"
           element={

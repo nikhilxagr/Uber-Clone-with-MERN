@@ -6,7 +6,7 @@ import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import ConfirmRidePopUp from "../components/ConfirmRidePopUp";
 import { SocketContext } from "../context/SocketContext";
-import { CaptainDataContext } from "../context/CapatainContext";
+import { CaptainDataContext } from "../context/CaptainContext";
 import axios from "axios";
 
 const CaptainHome = () => {
@@ -64,21 +64,27 @@ const CaptainHome = () => {
   }, [socket]);
 
   async function confirmRide() {
-    const response = await axios.post(
-      `${import.meta.env.VITE_BASE_URL}/rides/confirm`,
-      {
-        rideId: ride._id,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/rides/confirm`,
+        {
+          rideId: ride._id,
         },
-      },
-    );
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
 
-    setRide(response.data);
-    setRidePopupPanel(false);
-    setConfirmRidePopupPanel(true);
+      setRide(response.data);
+      setRidePopupPanel(false);
+      setConfirmRidePopupPanel(true);
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Failed to confirm ride. Another driver may have accepted.");
+      setRidePopupPanel(false);
+    }
   }
 
   useGSAP(
@@ -119,12 +125,20 @@ const CaptainHome = () => {
           src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png"
           alt=""
         />
-        <Link
-          to="/captain/logout"
-          className="h-10 w-10 bg-white flex items-center justify-center rounded-full"
-        >
-          <i className="text-lg font-medium ri-logout-box-r-line"></i>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/captain-history"
+            className="h-10 px-3 bg-white shadow-md flex items-center justify-center rounded-full text-xs font-semibold text-gray-800 hover:bg-gray-100 transition"
+          >
+            <i className="ri-history-line text-base mr-1"></i> Trips
+          </Link>
+          <Link
+            to="/captain/logout"
+            className="h-10 w-10 bg-white shadow-md flex items-center justify-center rounded-full"
+          >
+            <i className="text-lg font-medium ri-logout-box-r-line"></i>
+          </Link>
+        </div>
       </div>
       <div className="h-3/5">
         <img

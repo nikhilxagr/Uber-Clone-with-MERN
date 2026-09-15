@@ -4,45 +4,64 @@ import { useNavigate } from "react-router-dom";
 
 const ConfirmRidePopUp = (props) => {
   const [otp, setOtp] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const submitHandler = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
+    setIsSubmitting(true);
 
-    const response = await axios.get(
-      `${import.meta.env.VITE_BASE_URL}/rides/start-ride`,
-      {
-        params: {
-          rideId: props.ride._id,
-          otp,
-        },
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      },
-    );
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BASE_URL}/rides/start-ride`,
+        {
+          params: {
+            rideId: props.ride?._id,
+            otp,
+          },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
-    if (response.status === 200) {
-      props.setConfirmRidePopupPanel(false);
-      props.setRidePopupPanel(false);
-      navigate("/captain-riding", { state: { ride: response.data } });
+      if (response.status === 200) {
+        props.setConfirmRidePopupPanel(false);
+        props.setRidePopupPanel(false);
+        navigate("/captain-riding", { state: { ride: response.data } });
+      }
+    } catch (err) {
+      console.error(err);
+      setErrorMessage(
+        err.response?.data?.message || "Invalid OTP. Please check with rider."
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div>
       <h5
-        className="p-1 text-center w-[93%] absolute top-0"
+        className="p-1 text-center w-[93%] absolute top-0 cursor-pointer"
         onClick={() => {
           props.setConfirmRidePopupPanel(false);
         }}
       >
-        <i className="text-3xl text-gray-200 ri-arrow-down-wide-line"></i>
+        <i className="text-3xl text-gray-300 ri-arrow-down-wide-line"></i>
       </h5>
-      <h3 className="text-2xl font-semibold mb-5">
-        Confirm this ride to Start
-      </h3>
-      <div className="flex items-center justify-between p-3 border-2 border-yellow-400 rounded-lg mt-4">
+      <h3 className="text-2xl font-semibold mb-3">Confirm this ride to Start</h3>
+
+      {errorMessage && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2.5 rounded-xl text-sm mb-4 flex items-center gap-2">
+          <i className="ri-error-warning-line text-lg"></i>
+          <span>{errorMessage}</span>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between p-3 border-2 border-yellow-400 rounded-lg mt-2">
         <div className="flex items-center gap-3">
           <img
             className="h-12 rounded-full object-cover w-12"
@@ -58,16 +77,16 @@ const ConfirmRidePopUp = (props) => {
         </h5>
       </div>
       <div className="flex gap-2 justify-between flex-col items-center">
-        <div className="w-full mt-5">
+        <div className="w-full mt-4">
           <div className="flex items-center gap-5 p-3 border-b-2">
-            <i className="ri-map-pin-user-fill"></i>
+            <i className="ri-map-pin-user-fill text-emerald-600"></i>
             <div>
               <h3 className="text-lg font-medium">Pickup</h3>
               <p className="text-sm -mt-1 text-gray-600">{props.ride?.pickup}</p>
             </div>
           </div>
           <div className="flex items-center gap-5 p-3 border-b-2">
-            <i className="text-lg ri-map-pin-2-fill"></i>
+            <i className="text-lg ri-map-pin-2-fill text-red-500"></i>
             <div>
               <h3 className="text-lg font-medium">Destination</h3>
               <p className="text-sm -mt-1 text-gray-600">
@@ -76,7 +95,7 @@ const ConfirmRidePopUp = (props) => {
             </div>
           </div>
           <div className="flex items-center gap-5 p-3">
-            <i className="ri-currency-line"></i>
+            <i className="ri-currency-line text-emerald-600"></i>
             <div>
               <h3 className="text-lg font-medium">Rs {props.ride?.fare}</h3>
               <p className="text-sm -mt-1 text-gray-600">Cash</p>
@@ -84,18 +103,28 @@ const ConfirmRidePopUp = (props) => {
           </div>
         </div>
 
-        <div className="mt-6 w-full">
+        <div className="mt-4 w-full">
           <form onSubmit={submitHandler}>
             <input
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
               type="text"
-              className="bg-[#eee] px-6 py-4 font-mono text-lg rounded-lg w-full mt-3"
-              placeholder="Enter OTP"
+              maxLength="6"
+              className="bg-[#eee] px-6 py-4 font-mono text-center text-2xl tracking-widest rounded-lg w-full mt-2 focus:outline-none focus:border-black"
+              placeholder="Enter 6-digit OTP"
             />
 
-            <button className="w-full mt-5 text-lg flex justify-center bg-green-600 text-white font-semibold p-3 rounded-lg">
-              Confirm
+            <button
+              disabled={isSubmitting}
+              className="w-full mt-4 text-lg flex justify-center items-center gap-2 bg-green-600 text-white font-semibold p-3 rounded-lg hover:bg-green-700 transition"
+            >
+              {isSubmitting ? (
+                <>
+                  <i className="ri-loader-4-line animate-spin"></i> Verifying...
+                </>
+              ) : (
+                "Confirm & Start Ride"
+              )}
             </button>
             <button
               type="button"
@@ -103,7 +132,7 @@ const ConfirmRidePopUp = (props) => {
                 props.setConfirmRidePopupPanel(false);
                 props.setRidePopupPanel(false);
               }}
-              className="w-full mt-2 bg-red-600 text-lg text-white font-semibold p-3 rounded-lg"
+              className="w-full mt-2 bg-red-600 text-lg text-white font-semibold p-3 rounded-lg hover:bg-red-700 transition"
             >
               Cancel
             </button>

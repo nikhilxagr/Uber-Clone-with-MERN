@@ -10,7 +10,7 @@ import LookingForDriver from "../components/LookingForDriver";
 import WaitingForDriver from "../components/WaitingForDriver";
 import { SocketContext } from "../context/SocketContext";
 import { UserDataContext } from "../context/UserContext";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import LiveTracking from "../components/LiveTracking";
 
 const Home = () => {
@@ -194,50 +194,81 @@ const Home = () => {
   );
 
   async function findTrip() {
+    if (!pickup.trim() || !destination.trim()) {
+      alert("Please enter both pickup and destination addresses.");
+      return;
+    }
+
     setVehiclePanel(true);
     setPanelOpen(false);
 
-    const response = await axios.get(
-      `${import.meta.env.VITE_BASE_URL}/rides/get-fare`,
-      {
-        params: { pickup, destination },
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BASE_URL}/rides/get-fare`,
+        {
+          params: { pickup, destination },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         },
-      },
-    );
+      );
 
-    setFare(response.data);
+      setFare(response.data);
+    } catch (err) {
+      console.error(err);
+      alert("Unable to fetch fare estimate. Please check addresses.");
+    }
   }
 
   async function createRide() {
-    const response = await axios.post(
-      `${import.meta.env.VITE_BASE_URL}/rides/create`,
-      {
-        pickup,
-        destination,
-        vehicleType,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/rides/create`,
+        {
+          pickup,
+          destination,
+          vehicleType,
         },
-      },
-    );
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
 
-    setRide(response.data);
+      setRide(response.data);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to create ride. Please try again.");
+    }
   }
 
   return (
     <div className="h-screen relative overflow-hidden">
-      <img
-        className="w-16 absolute left-5 top-5"
-        src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png"
-        alt=""
-      />
+      <div className="fixed top-5 left-5 right-5 z-20 flex items-center justify-between pointer-events-none">
+        <img
+          className="w-16 pointer-events-auto"
+          src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png"
+          alt="Uber"
+        />
+        <div className="flex items-center gap-2 pointer-events-auto">
+          <Link
+            to="/history"
+            className="h-10 px-3 bg-white shadow-md flex items-center justify-center rounded-full text-xs font-semibold text-gray-800 hover:bg-gray-100 transition"
+          >
+            <i className="ri-history-line text-base mr-1"></i> Trips
+          </Link>
+          <Link
+            to="/user/logout"
+            className="h-10 w-10 bg-white shadow-md flex items-center justify-center rounded-full text-gray-800 hover:bg-gray-100 transition"
+          >
+            <i className="ri-logout-box-r-line text-lg"></i>
+          </Link>
+        </div>
+      </div>
       <div className="h-screen w-screen">
         {/* image for temporary use  */}
-        <LiveTracking />
+        <LiveTracking pickup={pickup} destination={destination} />
       </div>
       <div className=" flex flex-col justify-end h-screen absolute top-0 w-full">
         <div className="h-[30%] p-6 bg-white relative">
