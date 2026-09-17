@@ -62,4 +62,10 @@ router.get(
   captainController.logoutCaptain,
 );
 
+router.post(
+  "/toggle-status",
+  authMiddleware.authCaptain,
+  captainController.toggleStatus,
+);
+
 module.exports = router;

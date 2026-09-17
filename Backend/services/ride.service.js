@@ -255,3 +255,36 @@ module.exports.createReview = async ({ rideId, userId, captainId, rating, feedba
   return review;
 };
 
+module.exports.cancelRide = async ({ rideId, cancelledBy, reason, userId, captainId }) => {
+  if (!rideId) {
+    throw new Error("Ride id is required");
+  }
+
+  const query = { _id: rideId, status: { $in: ["pending", "accepted"] } };
+  if (cancelledBy === "user" && userId) {
+    query.user = userId;
+  } else if (cancelledBy === "captain" && captainId) {
+    query.captain = captainId;
+  }
+
+  const ride = await rideModel
+    .findOneAndUpdate(
+      query,
+      {
+        status: "cancelled",
+        cancelledBy,
+        cancelReason: reason || "No reason specified",
+      },
+      { new: true }
+    )
+    .populate("user")
+    .populate("captain");
+
+  if (!ride) {
+    throw new Error("Ride cannot be cancelled (may be already ongoing, completed, or cancelled)");
+  }
+
+  return ride;
+};
+
+

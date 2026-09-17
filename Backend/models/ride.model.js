@@ -40,6 +40,19 @@ const rideSchema = new mongoose.Schema({
     enum: ["pending", "accepted", "ongoing", "completed", "cancelled"],
     default: "pending",
   },
+  cancelledBy: {
+    type: String,
+    enum: ["user", "captain"],
+  },
+  cancelReason: {
+    type: String,
+  },
+  declinedBy: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Captain",
+    },
+  ],
   duration: {
     type: Number,
   }, // in seconds

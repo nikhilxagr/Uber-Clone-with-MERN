@@ -89,4 +89,18 @@ router.post(
   rideController.createReview,
 );
 
+router.post(
+  "/cancel",
+  authMiddleware.authUserOrCaptain,
+  body("rideId").isMongoId().withMessage("Invalid ride id"),
+  rideController.cancelRide,
+);
+
+router.post(
+  "/decline",
+  authMiddleware.authCaptain,
+  body("rideId").isMongoId().withMessage("Invalid ride id"),
+  rideController.declineRide,
+);
+
 module.exports = router;

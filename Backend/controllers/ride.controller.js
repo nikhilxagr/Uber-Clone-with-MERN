@@ -218,3 +218,97 @@ module.exports.createReview = async (req, res) => {
     return res.status(500).json({ message: err.message });
   }
 };
+
+module.exports.cancelRide = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { rideId, reason } = req.body;
+  const cancelledBy = req.user ? "user" : "captain";
+  const userId = req.user?._id;
+  const captainId = req.captain?._id;
+
+  try {
+    const ride = await rideService.cancelRide({
+      rideId,
+      cancelledBy,
+      reason,
+      userId,
+      captainId,
+    });
+
+    // Notify counterpart via Socket.io
+    if (cancelledBy === "user" && ride.captain?.socketId) {
+      sendMessageToSocketId(ride.captain.socketId, {
+        event: "ride-cancelled",
+        data: {
+          rideId: ride._id,
+          cancelledBy: "user",
+          reason: reason || "Rider cancelled the trip.",
+        },
+      });
+    } else if (cancelledBy === "captain" && ride.user?.socketId) {
+      sendMessageToSocketId(ride.user.socketId, {
+        event: "ride-cancelled",
+        data: {
+          rideId: ride._id,
+          cancelledBy: "captain",
+          reason: reason || "Driver had to cancel the request.",
+        },
+      });
+    }
+
+    return res.status(200).json({ message: "Ride cancelled successfully", ride });
+  } catch (err) {
+    return res.status(400).json({ message: err.message });
+  }
+};
+
+module.exports.declineRide = async (req, res) => {
+  const { rideId } = req.body;
+  const captainId = req.captain?._id;
+
+  try {
+    const updatedRide = await rideModel
+      .findByIdAndUpdate(
+        rideId,
+        { $addToSet: { declinedBy: captainId } },
+        { new: true }
+      )
+      .populate("user");
+
+    if (!updatedRide || updatedRide.status !== "pending") {
+      return res.status(200).json({ message: "Ride already handled or not pending" });
+    }
+
+    // Try finding next available captain in radius who hasn't declined
+    if (updatedRide.pickupCoordinates?.ltd && updatedRide.pickupCoordinates?.lng) {
+      const allCaptains = await mapService.getCaptainsInTheRadius(
+        updatedRide.pickupCoordinates.ltd,
+        updatedRide.pickupCoordinates.lng,
+        10
+      );
+
+      const nextCaptain = allCaptains.find(
+        (c) =>
+          c.socketId &&
+          !updatedRide.declinedBy.some((dId) => dId.equals(c._id))
+      );
+
+      if (nextCaptain) {
+        sendMessageToSocketId(nextCaptain.socketId, {
+          event: "new-ride",
+          data: updatedRide,
+        });
+      }
+    }
+
+    return res.status(200).json({ message: "Ride declined and forwarded if available" });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+

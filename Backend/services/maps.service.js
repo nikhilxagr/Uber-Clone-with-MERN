@@ -148,9 +148,10 @@ module.exports.getCaptainsInTheRadius = async (ltd, lng, radius) => {
     throw new Error("Invalid pickup coordinates");
   }
 
-  // Try 2DSphere spatial query first
+  // Try 2DSphere spatial query first (only active online captains)
   try {
     const captainsGeo = await captainModel.find({
+      status: "active",
       socketId: { $exists: true, $ne: null },
       locationGeo: {
         $near: {
@@ -170,8 +171,9 @@ module.exports.getCaptainsInTheRadius = async (ltd, lng, radius) => {
     console.warn("2DSphere query fallback to Haversine:", err.message);
   }
 
-  // Fallback to Haversine calculation
+  // Fallback to Haversine calculation for active captains
   const captains = await captainModel.find({
+    status: "active",
     socketId: { $exists: true, $ne: null },
   });
 
@@ -180,13 +182,12 @@ module.exports.getCaptainsInTheRadius = async (ltd, lng, radius) => {
     const captainLng = Number(captain.location?.lng);
 
     if (!Number.isFinite(captainLat) || !Number.isFinite(captainLng)) {
-      return true; // Include captain if location not set yet so test socket broadcasts always deliver!
+      return true;
     }
 
     return getDistanceInKm(pickupLat, pickupLng, captainLat, captainLng) <= radius;
   });
 
-  // If no captains match exact radius, return all online captains so testing/dev flows NEVER drop ride broadcasts
   return matched.length > 0 ? matched : captains;
 };
 

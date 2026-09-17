@@ -103,3 +103,24 @@ module.exports.logoutCaptain = async (req, res, next) => {
         next(error);
     }
 }
+
+module.exports.toggleStatus = async (req, res, next) => {
+    try {
+        const captainId = req.captain._id;
+        const requestedStatus = req.body.status;
+
+        const captain = await captainModel.findById(captainId);
+        if (!captain) {
+            return res.status(404).json({ message: "Captain not found" });
+        }
+
+        const newStatus = requestedStatus || (captain.status === "active" ? "inactive" : "active");
+        captain.status = newStatus;
+        await captain.save();
+
+        res.status(200).json({ captain, status: newStatus });
+    } catch (error) {
+        next(error);
+    }
+};
+
