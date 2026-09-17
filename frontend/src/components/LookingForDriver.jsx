@@ -42,6 +42,13 @@ const LookingForDriver = (props) => {
             </div>
           </div>
         </div>
+
+        <button
+          onClick={props.cancelRide}
+          className="w-full mt-4 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 text-sm"
+        >
+          <i className="ri-close-circle-line text-lg"></i> Cancel Request
+        </button>
       </div>
     </div>
   );

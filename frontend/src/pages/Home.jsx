@@ -33,6 +33,7 @@ const Home = () => {
   const [fare, setFare] = useState({});
   const [vehicleType, setVehicleType] = useState(null);
   const [ride, setRide] = useState(null);
+  const [cancelNotification, setCancelNotification] = useState("");
 
   const navigate = useNavigate();
 
@@ -59,14 +60,50 @@ const Home = () => {
       navigate("/riding", { state: { ride: startedRide } });
     };
 
+    const handleRideCancelled = (data) => {
+      setWaitingForDriver(false);
+      setVehicleFound(false);
+      setConfirmRidePanel(false);
+      setVehiclePanel(false);
+      setRide(null);
+      setCancelNotification(data?.reason || "Driver cancelled the trip. Please search again.");
+      setTimeout(() => setCancelNotification(""), 5000);
+    };
+
     socket.on("ride-confirmed", handleRideConfirmed);
     socket.on("ride-started", handleRideStarted);
+    socket.on("ride-cancelled", handleRideCancelled);
 
     return () => {
       socket.off("ride-confirmed", handleRideConfirmed);
       socket.off("ride-started", handleRideStarted);
+      socket.off("ride-cancelled", handleRideCancelled);
     };
   }, [navigate, socket]);
+
+  async function cancelRide() {
+    try {
+      if (ride?._id) {
+        await axios.post(
+          `${import.meta.env.VITE_BASE_URL}/rides/cancel`,
+          { rideId: ride._id, reason: "Rider cancelled request" },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+      }
+    } catch (err) {
+      console.warn("Cancel ride fallback:", err.message);
+    } finally {
+      setVehicleFound(false);
+      setWaitingForDriver(false);
+      setConfirmRidePanel(false);
+      setVehiclePanel(false);
+      setRide(null);
+    }
+  }
 
   const handlePickupChange = async (e) => {
     setPickup(e.target.value);
@@ -245,6 +282,14 @@ const Home = () => {
 
   return (
     <div className="h-screen relative overflow-hidden">
+      {/* Cancellation Toast Notification */}
+      {cancelNotification && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-amber-600 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 text-sm font-semibold animate-bounce">
+          <i className="ri-information-line text-xl"></i>
+          <span>{cancelNotification}</span>
+        </div>
+      )}
+
       <div className="fixed top-5 left-5 right-5 z-20 flex items-center justify-between pointer-events-none">
         <img
           className="w-16 pointer-events-auto"
@@ -370,6 +415,7 @@ const Home = () => {
           fare={fare}
           vehicleType={vehicleType}
           setVehicleFound={setVehicleFound}
+          cancelRide={cancelRide}
         />
       </div>
       <div
@@ -381,6 +427,7 @@ const Home = () => {
           setVehicleFound={setVehicleFound}
           setWaitingForDriver={setWaitingForDriver}
           waitingForDriver={waitingForDriver}
+          cancelRide={cancelRide}
         />
       </div>
     </div>
