@@ -1,6 +1,8 @@
 import React from "react";
 
 const VehiclePanel = (props) => {
+  const isSurge = props.fare?.isSurge || (props.fare?.surgeMultiplier && props.fare.surgeMultiplier > 1);
+
   return (
     <div>
       <h5
@@ -11,84 +13,133 @@ const VehiclePanel = (props) => {
       >
         <i className="text-3xl text-gray-200 ri-arrow-down-wide-line"></i>
       </h5>
-      <h3 className="text-2xl font-semibold mb-5">Choose a Vehicle</h3>
+      <h3 className="text-2xl font-bold mb-3">Choose a Vehicle</h3>
+
+      {/* Dynamic Surge Pricing Notice */}
+      {isSurge && (
+        <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-between text-xs text-amber-800 shadow-sm animate-in fade-in duration-300">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-full bg-amber-500 text-white flex items-center justify-center text-sm shadow">
+              <i className="ri-flashlight-fill"></i>
+            </div>
+            <div>
+              <span className="font-black text-amber-900 uppercase tracking-wide">
+                Surge Pricing Active
+              </span>
+              <p className="text-[11px] text-amber-700 font-medium">
+                High demand in this area. Fares adjusted {props.fare?.surgeMultiplier}x to attract more drivers.
+              </p>
+            </div>
+          </div>
+          <span className="font-black font-mono bg-amber-500 text-white text-[11px] px-2 py-1 rounded-xl shadow-sm">
+            {props.fare?.surgeMultiplier}x
+          </span>
+        </div>
+      )}
+
+      {/* Car Option */}
       <div
         onClick={() => {
           props.setConfirmRidePanel(true);
           props.selectVehicle("car");
         }}
-        className="flex border-2 active:border-black  mb-2 rounded-xl w-full p-3  items-center justify-between"
+        className="flex border-2 active:border-black hover:border-black transition mb-3 rounded-2xl w-full p-3.5 items-center justify-between cursor-pointer group shadow-sm bg-white"
       >
         <img
-          className="h-10"
+          className="h-12 object-contain"
           src="https://swyft.pl/wp-content/uploads/2023/05/how-many-people-can-a-uberx-take.jpg"
-          alt=""
+          alt="UberGo"
         />
-        <div className="ml-2 w-1/2">
-          <h4 className="font-medium text-base">
+        <div className="ml-3 flex-1">
+          <h4 className="font-bold text-base text-gray-900 flex items-center gap-1.5">
             UberGo{" "}
-            <span>
-              <i className="ri-user-3-fill"></i>4
+            <span className="text-xs text-gray-500 font-normal">
+              <i className="ri-user-3-fill text-xs"></i> 4
             </span>
           </h4>
-          <h5 className="font-medium text-sm">2 mins away </h5>
-          <p className="font-normal text-xs text-gray-600">
-            Affordable, compact rides
+          <h5 className="font-semibold text-xs text-emerald-600">2 mins away</h5>
+          <p className="font-normal text-xs text-gray-500">
+            Affordable, compact sedans
           </p>
         </div>
-        <h2 className="text-lg font-semibold">₹{props.fare.car}</h2>
+        <div className="text-right">
+          <h2 className="text-lg font-black text-gray-950">₹{props.fare?.car}</h2>
+          {isSurge && (
+            <span className="text-[10px] font-bold text-amber-600 flex items-center justify-end gap-0.5">
+              <i className="ri-flashlight-fill text-[10px]"></i> Surge
+            </span>
+          )}
+        </div>
       </div>
+
+      {/* Moto Option */}
       <div
         onClick={() => {
           props.setConfirmRidePanel(true);
           props.selectVehicle("moto");
         }}
-        className="flex border-2 active:border-black mb-2 rounded-xl w-full p-3  items-center justify-between"
+        className="flex border-2 active:border-black hover:border-black transition mb-3 rounded-2xl w-full p-3.5 items-center justify-between cursor-pointer group shadow-sm bg-white"
       >
         <img
-          className="h-10"
+          className="h-12 object-contain"
           src="https://www.uber-assets.com/image/upload/f_auto,q_auto:eco,c_fill,h_638,w_956/v1649231091/assets/2c/7fa194-c954-49b2-9c6d-a3b8601370f5/original/Uber_Moto_Orange_312x208_pixels_Mobile.png"
-          alt=""
+          alt="Moto"
         />
-        <div className="-ml-2 w-1/2">
-          <h4 className="font-medium text-base">
+        <div className="ml-3 flex-1">
+          <h4 className="font-bold text-base text-gray-900 flex items-center gap-1.5">
             Moto{" "}
-            <span>
-              <i className="ri-user-3-fill"></i>1
+            <span className="text-xs text-gray-500 font-normal">
+              <i className="ri-user-3-fill text-xs"></i> 1
             </span>
           </h4>
-          <h5 className="font-medium text-sm">3 mins away </h5>
-          <p className="font-normal text-xs text-gray-600">
-            Affordable motorcycle rides
+          <h5 className="font-semibold text-xs text-emerald-600">3 mins away</h5>
+          <p className="font-normal text-xs text-gray-500">
+            Fast motorcycle rides
           </p>
         </div>
-        <h2 className="text-lg font-semibold">₹{props.fare.moto}</h2>
+        <div className="text-right">
+          <h2 className="text-lg font-black text-gray-950">₹{props.fare?.moto}</h2>
+          {isSurge && (
+            <span className="text-[10px] font-bold text-amber-600 flex items-center justify-end gap-0.5">
+              <i className="ri-flashlight-fill text-[10px]"></i> Surge
+            </span>
+          )}
+        </div>
       </div>
+
+      {/* Auto Option */}
       <div
         onClick={() => {
           props.setConfirmRidePanel(true);
           props.selectVehicle("auto");
         }}
-        className="flex border-2 active:border-black mb-2 rounded-xl w-full p-3  items-center justify-between"
+        className="flex border-2 active:border-black hover:border-black transition mb-3 rounded-2xl w-full p-3.5 items-center justify-between cursor-pointer group shadow-sm bg-white"
       >
         <img
-          className="h-10"
+          className="h-12 object-contain"
           src="https://www.uber-assets.com/image/upload/f_auto,q_auto:eco,c_fill,h_368,w_552/v1648431773/assets/1d/db8c56-0204-4ce4-81ce-56a11a07fe98/original/Uber_Auto_558x372_pixels_Desktop.png"
-          alt=""
+          alt="Auto"
         />
-        <div className="ml-2 w-1/2">
-          <h4 className="font-medium text-base">
+        <div className="ml-3 flex-1">
+          <h4 className="font-bold text-base text-gray-900 flex items-center gap-1.5">
             UberAuto{" "}
-            <span>
-              <i className="ri-user-3-fill"></i>3
+            <span className="text-xs text-gray-500 font-normal">
+              <i className="ri-user-3-fill text-xs"></i> 3
             </span>
           </h4>
-          <h5 className="font-medium text-sm">3 mins away </h5>
-          <p className="font-normal text-xs text-gray-600">
-            Affordable Auto rides
+          <h5 className="font-semibold text-xs text-emerald-600">3 mins away</h5>
+          <p className="font-normal text-xs text-gray-500">
+            No bargaining auto-rickshaws
           </p>
         </div>
-        <h2 className="text-lg font-semibold">₹{props.fare.auto}</h2>
+        <div className="text-right">
+          <h2 className="text-lg font-black text-gray-950">₹{props.fare?.auto}</h2>
+          {isSurge && (
+            <span className="text-[10px] font-bold text-amber-600 flex items-center justify-end gap-0.5">
+              <i className="ri-flashlight-fill text-[10px]"></i> Surge
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState, useCallback } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import axios from "axios";
@@ -34,11 +34,61 @@ const Home = () => {
   const [vehicleType, setVehicleType] = useState(null);
   const [ride, setRide] = useState(null);
   const [cancelNotification, setCancelNotification] = useState("");
+  const [isLocating, setIsLocating] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
+  const [pickupCoords, setPickupCoords] = useState(null);
+  const [destCoords, setDestCoords] = useState(null);
 
   const navigate = useNavigate();
 
   const { socket } = useContext(SocketContext);
   const { user } = useContext(UserDataContext);
+
+  const detectCurrentLocation = useCallback(async () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setUserLocation({ lat, lng });
+        setPickupCoords({ ltd: lat, lng });
+
+        try {
+          const res = await axios.get(
+            `${import.meta.env.VITE_BASE_URL}/maps/reverse-geocode`,
+            {
+              params: { ltd: lat, lng },
+            }
+          );
+
+          if (res.data?.address) {
+            setPickup(res.data.address);
+          } else {
+            setPickup(`Live Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+          }
+        } catch {
+          setPickup(`Live Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+        } finally {
+          setIsLocating(false);
+        }
+      },
+      (err) => {
+        console.warn("Geolocation detection error:", err.message);
+        setIsLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }, []);
+
+  // Automatic live location detection like Uber on opening home screen
+  useEffect(() => {
+    detectCurrentLocation();
+  }, [detectCurrentLocation]);
 
   useEffect(() => {
     if (!user?._id) {
@@ -106,12 +156,21 @@ const Home = () => {
   }
 
   const handlePickupChange = async (e) => {
-    setPickup(e.target.value);
+    const val = e.target.value;
+    setPickup(val);
+    if (!val || val.trim().length === 0) {
+      setPickupSuggestions([]);
+      return;
+    }
     try {
       const response = await axios.get(
         `${import.meta.env.VITE_BASE_URL}/maps/get-suggestions`,
         {
-          params: { input: e.target.value },
+          params: {
+            input: val,
+            lat: userLocation?.lat,
+            lng: userLocation?.lng,
+          },
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -124,12 +183,21 @@ const Home = () => {
   };
 
   const handleDestinationChange = async (e) => {
-    setDestination(e.target.value);
+    const val = e.target.value;
+    setDestination(val);
+    if (!val || val.trim().length === 0) {
+      setDestinationSuggestions([]);
+      return;
+    }
     try {
       const response = await axios.get(
         `${import.meta.env.VITE_BASE_URL}/maps/get-suggestions`,
         {
-          params: { input: e.target.value },
+          params: {
+            input: val,
+            lat: userLocation?.lat,
+            lng: userLocation?.lng,
+          },
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -290,7 +358,11 @@ const Home = () => {
         </div>
       )}
 
-      <div className="fixed top-5 left-5 right-5 z-20 flex items-center justify-between pointer-events-none">
+      <div
+        className={`fixed top-5 left-5 right-5 z-20 flex items-center justify-between transition-opacity duration-200 ${
+          panelOpen ? "opacity-0 pointer-events-none" : "opacity-100 pointer-events-none"
+        }`}
+      >
         <img
           className="w-16 pointer-events-auto"
           src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png"
@@ -313,20 +385,25 @@ const Home = () => {
       </div>
       <div className="h-screen w-screen">
         {/* image for temporary use  */}
-        <LiveTracking pickup={pickup} destination={destination} />
+        <LiveTracking
+          pickup={pickup}
+          destination={destination}
+          pickupCoords={pickupCoords}
+          destCoords={destCoords}
+        />
       </div>
-      <div className=" flex flex-col justify-end h-screen absolute top-0 w-full">
-        <div className="h-[30%] p-6 bg-white relative">
+      <div className=" flex flex-col justify-end h-screen absolute top-0 w-full pointer-events-none">
+        <div className="h-[30%] p-6 bg-white relative pointer-events-auto shadow-2xl">
           <h5
             ref={panelCloseRef}
             onClick={() => {
               setPanelOpen(false);
             }}
-            className="absolute opacity-0 right-6 top-6 text-2xl"
+            className="absolute opacity-0 right-6 top-6 text-2xl cursor-pointer"
           >
             <i className="ri-arrow-down-wide-line"></i>
           </h5>
-          <h4 className="text-2xl font-semibold">Find a trip</h4>
+          <h4 className="text-2xl font-bold text-gray-900">Find a trip</h4>
           <form
             className="relative py-3"
             onSubmit={(e) => {
@@ -334,17 +411,35 @@ const Home = () => {
             }}
           >
             <div className="line absolute h-16 w-1 top-[50%] -translate-y-1/2 left-5 bg-gray-700 rounded-full"></div>
-            <input
-              onClick={() => {
-                setPanelOpen(true);
-                setActiveField("pickup");
-              }}
-              value={pickup}
-              onChange={handlePickupChange}
-              className="bg-[#eee] px-12 py-2 text-lg rounded-lg w-full"
-              type="text"
-              placeholder="Add a pick-up location"
-            />
+            
+            {/* Pickup Input with GPS Auto-Locate Button */}
+            <div className="relative">
+              <input
+                onClick={() => {
+                  setPanelOpen(true);
+                  setActiveField("pickup");
+                }}
+                value={pickup}
+                onChange={handlePickupChange}
+                className="bg-[#eee] px-12 py-3 pr-11 text-base rounded-xl w-full font-medium placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black"
+                type="text"
+                placeholder="Add a pick-up location"
+              />
+              <button
+                type="button"
+                onClick={detectCurrentLocation}
+                disabled={isLocating}
+                title="Detect live GPS location"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-white/90 hover:bg-white text-emerald-600 flex items-center justify-center transition shadow-sm active:scale-95"
+              >
+                {isLocating ? (
+                  <i className="ri-loader-4-line animate-spin text-base text-emerald-600"></i>
+                ) : (
+                  <i className="ri-crosshair-2-line text-lg text-emerald-600"></i>
+                )}
+              </button>
+            </div>
+
             <input
               onClick={() => {
                 setPanelOpen(true);
@@ -352,19 +447,19 @@ const Home = () => {
               }}
               value={destination}
               onChange={handleDestinationChange}
-              className="bg-[#eee] px-12 py-2 text-lg rounded-lg w-full  mt-3"
+              className="bg-[#eee] px-12 py-3 text-base rounded-xl w-full mt-3 font-medium placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black"
               type="text"
               placeholder="Enter your destination"
             />
           </form>
           <button
             onClick={findTrip}
-            className="bg-black text-white px-4 py-2 rounded-lg mt-3 w-full"
+            className="bg-black hover:bg-gray-800 text-white font-bold px-4 py-3 rounded-xl mt-2 w-full transition shadow-md active:scale-95 text-base"
           >
             Find Trip
           </button>
         </div>
-        <div ref={panelRef} className="bg-white h-0">
+        <div ref={panelRef} className="bg-white h-0 pointer-events-auto">
           <LocationSearchPanel
             suggestions={
               activeField === "pickup"
@@ -376,6 +471,10 @@ const Home = () => {
             setPickup={setPickup}
             setDestination={setDestination}
             activeField={activeField}
+            onUseCurrentLocation={detectCurrentLocation}
+            isLocating={isLocating}
+            setPickupCoords={setPickupCoords}
+            setDestCoords={setDestCoords}
           />
         </div>
       </div>

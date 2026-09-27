@@ -124,17 +124,17 @@ const LiveTracking = ({ pickup, destination, driverLocation, pickupCoords, destC
 
       // Obtain Pickup Coordinates
       if (pickupCoords?.ltd && pickupCoords?.lng) {
-        pLat = pickupCoords.ltd;
-        pLng = pickupCoords.lng;
+        pLat = Number(pickupCoords.ltd);
+        pLng = Number(pickupCoords.lng);
       } else if (pickup) {
         try {
           const res = await axios.get(
-            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(pickup)}&format=json&limit=1`,
-            { headers: { "User-Agent": "UberCloneApp/1.0" } }
+            `https://photon.komoot.io/api/?q=${encodeURIComponent(pickup)}&limit=1`
           );
-          if (res.data && res.data[0]) {
-            pLat = parseFloat(res.data[0].lat);
-            pLng = parseFloat(res.data[0].lon);
+          if (res.data?.features && res.data.features[0]) {
+            const coords = res.data.features[0].geometry.coordinates;
+            pLat = coords[1];
+            pLng = coords[0];
           }
         } catch {
           pLat = currentPosition[0];
@@ -144,17 +144,17 @@ const LiveTracking = ({ pickup, destination, driverLocation, pickupCoords, destC
 
       // Obtain Destination Coordinates
       if (destCoords?.ltd && destCoords?.lng) {
-        dLat = destCoords.ltd;
-        dLng = destCoords.lng;
+        dLat = Number(destCoords.ltd);
+        dLng = Number(destCoords.lng);
       } else if (destination) {
         try {
           const res = await axios.get(
-            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(destination)}&format=json&limit=1`,
-            { headers: { "User-Agent": "UberCloneApp/1.0" } }
+            `https://photon.komoot.io/api/?q=${encodeURIComponent(destination)}&limit=1`
           );
-          if (res.data && res.data[0]) {
-            dLat = parseFloat(res.data[0].lat);
-            dLng = parseFloat(res.data[0].lon);
+          if (res.data?.features && res.data.features[0]) {
+            const coords = res.data.features[0].geometry.coordinates;
+            dLat = coords[1];
+            dLng = coords[0];
           }
         } catch {
           dLat = pLat ? pLat + 0.03 : currentPosition[0] + 0.03;
@@ -254,11 +254,63 @@ const LiveTracking = ({ pickup, destination, driverLocation, pickupCoords, destC
     }
   }, [driverLocation, pickup, destination]);
 
+  const [liveEta, setLiveEta] = useState(null);
+
+  // Dynamic live ETA calculation
+  useEffect(() => {
+    if (!driverLocation?.lat || !driverLocation?.lng) {
+      setLiveEta(null);
+      return;
+    }
+
+    const targetCoords =
+      destCoords?.ltd && destCoords?.lng
+        ? destCoords
+        : pickupCoords?.ltd && pickupCoords?.lng
+        ? pickupCoords
+        : null;
+
+    if (!targetCoords?.ltd || !targetCoords?.lng) return;
+
+    const toRad = (d) => (d * Math.PI) / 180;
+    const R = 6371;
+    const dLat = toRad(targetCoords.ltd - driverLocation.lat);
+    const dLng = toRad(targetCoords.lng - driverLocation.lng);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(driverLocation.lat)) *
+        Math.cos(toRad(targetCoords.ltd)) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distKm = R * c;
+    const durMins = Math.max(1, Math.round((distKm / 30) * 60));
+
+    setLiveEta({
+      distanceKm: distKm.toFixed(1),
+      durationMin: durMins,
+    });
+  }, [driverLocation, destCoords, pickupCoords]);
+
   return (
-    <div
-      ref={mapContainerRef}
-      className="w-full h-full min-h-[300px] bg-gray-100 relative z-0"
-    />
+    <div className="w-full h-full min-h-[300px] relative z-0">
+      <div
+        ref={mapContainerRef}
+        className="w-full h-full min-h-[300px] bg-gray-100 relative z-0"
+      />
+
+      {liveEta && (
+        <div className="absolute top-4 left-4 z-[400] bg-black/90 backdrop-blur-md text-white px-4 py-2 rounded-2xl shadow-xl flex items-center gap-2.5 border border-white/10 pointer-events-none animate-in fade-in duration-300">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+          <div className="text-xs">
+            <span className="font-bold text-emerald-400">
+              ~{liveEta.durationMin} mins away
+            </span>
+            <span className="text-gray-300 ml-1.5">• {liveEta.distanceKm} km</span>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
