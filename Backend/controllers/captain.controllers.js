@@ -124,3 +124,14 @@ module.exports.toggleStatus = async (req, res, next) => {
     }
 };
 
+module.exports.getCaptainEarnings = async (req, res, next) => {
+    try {
+        const captainId = req.captain._id;
+        const earnings = await captainService.getCaptainEarnings(captainId);
+        return res.status(200).json(earnings);
+    } catch (error) {
+        next(error);
+    }
+};
+
+

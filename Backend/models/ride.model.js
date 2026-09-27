@@ -37,7 +37,7 @@ const rideSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["pending", "accepted", "ongoing", "completed", "cancelled"],
+    enum: ["pending", "accepted", "arrived", "ongoing", "completed", "cancelled"],
     default: "pending",
   },
   cancelledBy: {
@@ -59,6 +59,10 @@ const rideSchema = new mongoose.Schema({
   distance: {
     type: Number,
   }, // in meters
+  surgeMultiplier: {
+    type: Number,
+    default: 1.0,
+  },
   paymentID: {
     type: String,
   },
@@ -68,11 +72,21 @@ const rideSchema = new mongoose.Schema({
   signature: {
     type: String,
   },
+  paymentStatus: {
+    type: String,
+    enum: ["pending", "paid", "failed"],
+    default: "pending",
+  },
+  paymentMethod: {
+    type: String,
+    enum: ["cash", "upi", "card", "razorpay"],
+    default: "cash",
+  },
   otp: {
     type: String,
     select: false,
     required: true,
   },
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model("ride", rideSchema);

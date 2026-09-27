@@ -42,13 +42,26 @@ module.exports.getAutoCompleteSuggestions = async (req, res, next) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { input } = req.query;
+    const { input, lat, ltd, lng, lon } = req.query;
+    const userLat = lat || ltd;
+    const userLng = lng || lon;
 
-    const suggestions = await mapService.getAutoCompleteSuggestions(input);
+    const suggestions = await mapService.getAutoCompleteSuggestions(input, userLat, userLng);
 
     res.status(200).json(suggestions);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+module.exports.reverseGeocode = async (req, res, next) => {
+  const { ltd, lng } = req.query;
+
+  try {
+    const result = await mapService.reverseGeocode(ltd, lng);
+    return res.status(200).json(result);
+  } catch (err) {
+    return res.status(400).json({ message: err.message });
   }
 };

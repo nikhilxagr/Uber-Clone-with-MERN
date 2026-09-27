@@ -68,6 +68,21 @@ router.post(
   rideController.makePayment,
 );
 
+router.post(
+  "/create-razorpay-order",
+  authMiddleware.authUser,
+  body("rideId").isMongoId().withMessage("Invalid ride id"),
+  rideController.createRazorpayOrder,
+);
+
+router.post(
+  "/verify-payment",
+  authMiddleware.authUser,
+  body("rideId").isMongoId().withMessage("Invalid ride id"),
+  rideController.verifyPayment,
+);
+
+
 router.get(
   "/user-rides",
   authMiddleware.authUser,
@@ -101,6 +116,13 @@ router.post(
   authMiddleware.authCaptain,
   body("rideId").isMongoId().withMessage("Invalid ride id"),
   rideController.declineRide,
+);
+
+router.post(
+  "/driver-arrived",
+  authMiddleware.authCaptain,
+  body("rideId").isMongoId().withMessage("Invalid ride id"),
+  rideController.driverArrived,
 );
 
 module.exports = router;

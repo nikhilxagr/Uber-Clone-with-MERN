@@ -68,4 +68,11 @@ router.post(
   captainController.toggleStatus,
 );
 
+router.get(
+  "/earnings",
+  authMiddleware.authCaptain,
+  captainController.getCaptainEarnings,
+);
+
 module.exports = router;
+

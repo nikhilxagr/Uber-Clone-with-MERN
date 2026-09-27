@@ -179,6 +179,58 @@ module.exports.makePayment = async (req, res) => {
   }
 };
 
+module.exports.createRazorpayOrder = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { rideId } = req.body;
+
+  try {
+    const orderData = await rideService.createRazorpayOrder({ rideId });
+    return res.status(200).json(orderData);
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports.verifyPayment = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const {
+    rideId,
+    razorpay_order_id,
+    razorpay_payment_id,
+    razorpay_signature,
+    paymentMethod,
+  } = req.body;
+
+  try {
+    const ride = await rideService.verifyRazorpayPayment({
+      rideId,
+      orderId: razorpay_order_id,
+      paymentId: razorpay_payment_id,
+      signature: razorpay_signature,
+      paymentMethod,
+    });
+
+    if (ride?.captain?.socketId) {
+      sendMessageToSocketId(ride.captain.socketId, {
+        event: "payment-received",
+        data: ride,
+      });
+    }
+
+    return res.status(200).json(ride);
+  } catch (err) {
+    return res.status(400).json({ message: err.message });
+  }
+};
+
 module.exports.getUserRides = async (req, res) => {
   try {
     const rides = await rideService.getUserRides(req.user._id);
@@ -310,5 +362,33 @@ module.exports.declineRide = async (req, res) => {
     return res.status(500).json({ message: err.message });
   }
 };
+
+module.exports.driverArrived = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { rideId } = req.body;
+
+  try {
+    const ride = await rideService.driverArrived({
+      rideId,
+      captain: req.captain,
+    });
+
+    if (ride.user?.socketId) {
+      sendMessageToSocketId(ride.user.socketId, {
+        event: "driver-arrived",
+        data: ride,
+      });
+    }
+
+    return res.status(200).json(ride);
+  } catch (err) {
+    return res.status(400).json({ message: err.message });
+  }
+};
+
 
 

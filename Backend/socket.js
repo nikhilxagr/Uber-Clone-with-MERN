@@ -55,6 +55,19 @@ function initializeSocket(server) {
       }
     });
 
+    socket.on("send-message", (data) => {
+      const { recipientSocketId, message, senderType, senderName, rideId } = data;
+      if (recipientSocketId && io) {
+        io.to(recipientSocketId).emit("receive-message", {
+          message,
+          senderType,
+          senderName,
+          rideId,
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        });
+      }
+    });
+
     socket.on("disconnect", async () => {
       const { userId, userType } = socket.data;
 
