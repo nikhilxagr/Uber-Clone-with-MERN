@@ -68,11 +68,22 @@ const CaptainSignup = () => {
   return (
     <div className="py-5 px-5 min-h-screen flex flex-col justify-between max-w-md mx-auto">
       <div>
-        <img
-          className="w-20 mb-3"
-          src="https://www.svgrepo.com/show/505031/uber-driver.svg"
-          alt="Driver Logo"
-        />
+        <div className="flex items-center gap-3.5 mb-4">
+          <img
+            className="w-12 h-12 rounded-xl shadow-md object-cover border border-neutral-100"
+            src="/images/uber-driver-badge.jpg"
+            alt="Uber Driver Logo"
+          />
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xl font-black text-black tracking-tight">Uber</span>
+              <span className="text-[10px] font-black uppercase tracking-wider bg-black text-white px-1.5 py-0.5 rounded-md">
+                Driver
+              </span>
+            </div>
+            <p className="text-[11px] font-semibold text-neutral-400 mt-0.5">Captain Registration</p>
+          </div>
+        </div>
 
         {errorMessage && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-6 flex items-center gap-2">

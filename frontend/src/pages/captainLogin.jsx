@@ -49,11 +49,22 @@ const Captainlogin = () => {
   return (
     <div className="p-7 h-screen flex flex-col justify-between max-w-md mx-auto">
       <div>
-        <img
-          className="w-20 mb-6"
-          src="https://www.svgrepo.com/show/505031/uber-driver.svg"
-          alt="Driver Logo"
-        />
+        <div className="flex items-center gap-3.5 mb-6">
+          <img
+            className="w-14 h-14 rounded-2xl shadow-md object-cover border border-neutral-100"
+            src="/images/uber-driver-badge.jpg"
+            alt="Uber Driver Logo"
+          />
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-black text-black tracking-tight">Uber</span>
+              <span className="text-[11px] font-black uppercase tracking-wider bg-black text-white px-2 py-0.5 rounded-md">
+                Driver
+              </span>
+            </div>
+            <p className="text-xs font-semibold text-neutral-400 mt-0.5">Captain Portal</p>
+          </div>
+        </div>
 
         {errorMessage && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-6 flex items-center gap-2">

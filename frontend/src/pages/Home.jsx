@@ -14,8 +14,8 @@ import { Link, useNavigate } from "react-router-dom";
 import LiveTracking from "../components/LiveTracking";
 
 const Home = () => {
-  const [pickup, setPickup] = useState("");
-  const [destination, setDestination] = useState("");
+  const [pickup, setPickup] = useState(() => sessionStorage.getItem("initialPickup") || "");
+  const [destination, setDestination] = useState(() => sessionStorage.getItem("initialDestination") || "");
   const [panelOpen, setPanelOpen] = useState(false);
   const vehiclePanelRef = useRef(null);
   const confirmRidePanelRef = useRef(null);
@@ -87,7 +87,10 @@ const Home = () => {
 
   // Automatic live location detection like Uber on opening home screen
   useEffect(() => {
-    detectCurrentLocation();
+    const saved = sessionStorage.getItem("initialPickup");
+    if (!saved) {
+      detectCurrentLocation();
+    }
   }, [detectCurrentLocation]);
 
   useEffect(() => {
@@ -365,7 +368,7 @@ const Home = () => {
       >
         <img
           className="w-16 pointer-events-auto"
-          src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png"
+          src="/images/uber-logo.svg"
           alt="Uber"
         />
         <div className="flex items-center gap-2 pointer-events-auto">

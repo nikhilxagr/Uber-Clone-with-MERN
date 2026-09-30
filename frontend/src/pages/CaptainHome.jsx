@@ -207,7 +207,7 @@ const CaptainHome = () => {
       <div className="fixed p-5 top-0 flex items-center justify-between w-screen z-20 pointer-events-none">
         <img
           className="w-16 pointer-events-auto"
-          src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png"
+          src="/images/uber-logo.svg"
           alt="Uber"
         />
 

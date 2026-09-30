@@ -1,32 +1,50 @@
 import { useEffect, useState, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import AdminFleetMap from "../components/AdminFleetMap";
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const [statsData, setStatsData] = useState(null);
   const [fleetData, setFleetData] = useState({ captains: [], activeTrips: [] });
   const [isLoading, setIsLoading] = useState(true);
-  const [driverFilter, setDriverFilter] = useState("all"); // "all" | "active" | "inactive"
+  const [driverFilter, setDriverFilter] = useState("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const adminToken = localStorage.getItem("adminToken");
 
   const fetchDashboardData = useCallback(async () => {
     setIsRefreshing(true);
+    const token = localStorage.getItem("adminToken");
+    if (!token) {
+      navigate("/admin-login");
+      return;
+    }
+
     try {
       const [statsRes, fleetRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_BASE_URL}/admin/stats`),
-        axios.get(`${import.meta.env.VITE_BASE_URL}/admin/fleet`),
+        axios.get(`${import.meta.env.VITE_BASE_URL}/admin/stats`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get(`${import.meta.env.VITE_BASE_URL}/admin/fleet`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       ]);
 
       setStatsData(statsRes.data);
       setFleetData(fleetRes.data);
     } catch (err) {
       console.error("Admin dashboard fetch error:", err.message);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        localStorage.removeItem("adminToken");
+        localStorage.removeItem("adminUser");
+        navigate("/admin-login");
+      }
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -36,9 +54,13 @@ const AdminDashboard = () => {
 
   const handleToggleDriverStatus = async (captainId) => {
     try {
+      const token = localStorage.getItem("adminToken");
       await axios.post(
         `${import.meta.env.VITE_BASE_URL}/admin/toggle-driver-status`,
-        { captainId }
+        { captainId },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
       fetchDashboardData();
     } catch (err) {
@@ -112,6 +134,19 @@ const AdminDashboard = () => {
           >
             <i className="ri-steering-2-line"></i> Driver App
           </Link>
+
+          <button
+            onClick={() => {
+              localStorage.removeItem("adminToken");
+              localStorage.removeItem("adminUser");
+              navigate("/admin-login");
+            }}
+            className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-semibold px-3 py-2 rounded-xl transition flex items-center gap-1.5"
+            title="Log out of Admin"
+          >
+            <i className="ri-logout-box-r-line"></i>
+            <span>Logout</span>
+          </button>
         </div>
       </header>
 
