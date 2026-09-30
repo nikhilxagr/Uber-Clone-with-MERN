@@ -94,3 +94,31 @@ module.exports.authUserOrCaptain = async (req, res, next) => {
     return res.status(401).json({ message: "Unauthorized" });
   }
 };
+
+module.exports.authAdmin = async (req, res, next) => {
+  const token =
+    req.cookies?.adminToken ||
+    req.cookies?.token ||
+    req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized: Admin access requires login" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const expectedEmail = (process.env.ADMIN_EMAIL || "nikhilagrahari517@gmail.com").trim().toLowerCase();
+
+    if (
+      decoded.role !== "admin" ||
+      (decoded.email && decoded.email.trim().toLowerCase() !== expectedEmail)
+    ) {
+      return res.status(403).json({ message: "Forbidden: Not an authorized admin" });
+    }
+
+    req.admin = decoded;
+    return next();
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid or expired admin session. Please log in again." });
+  }
+};

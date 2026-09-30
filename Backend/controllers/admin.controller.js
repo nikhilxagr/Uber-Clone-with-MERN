@@ -1,6 +1,61 @@
+const jwt = require("jsonwebtoken");
 const userModel = require("../models/user.model");
 const captainModel = require("../models/captain.model");
 const rideModel = require("../models/ride.model");
+
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "nikhilagrahari517@gmail.com";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "Aryan@789787";
+
+module.exports.loginAdmin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    if (
+      email.trim().toLowerCase() !== ADMIN_EMAIL.trim().toLowerCase() ||
+      password !== ADMIN_PASSWORD
+    ) {
+      return res.status(401).json({ message: "Invalid admin email or password" });
+    }
+
+    const token = jwt.sign(
+      { role: "admin", email: ADMIN_EMAIL },
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" }
+    );
+
+    res.cookie("adminToken", token);
+
+    return res.status(200).json({
+      message: "Admin login successful",
+      token,
+      admin: {
+        email: ADMIN_EMAIL,
+        name: "Nikhil Agrahari (Admin)",
+        role: "admin",
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports.getAdminProfile = async (req, res) => {
+  try {
+    return res.status(200).json({
+      admin: {
+        email: req.admin?.email || ADMIN_EMAIL,
+        name: "Nikhil Agrahari (Admin)",
+        role: "admin",
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
 
 module.exports.getAdminStats = async (req, res) => {
   try {
