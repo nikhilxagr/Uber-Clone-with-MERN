@@ -14,6 +14,8 @@ import Riding from "./pages/Riding";
 import CaptainRiding from "./pages/CaptainRiding";
 import RideHistory from "./pages/RideHistory";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminLogin from "./pages/AdminLogin";
+import AdminProtectWrapper from "./pages/AdminProtectWrapper";
 import "remixicon/fonts/remixicon.css";
 
 const App = () => {
@@ -66,7 +68,15 @@ const App = () => {
             </CaptainProtectWrapper>
           }
         />
-        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin-login" element={<AdminLogin />} />
+        <Route
+          path="/admin"
+          element={
+            <AdminProtectWrapper>
+              <AdminDashboard />
+            </AdminProtectWrapper>
+          }
+        />
         <Route
           path="/user/logout"
           element={

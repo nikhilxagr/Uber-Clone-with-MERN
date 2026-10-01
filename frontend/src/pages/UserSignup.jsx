@@ -59,8 +59,8 @@ const UserSignup = () => {
     <div className="p-7 h-screen flex flex-col justify-between max-w-md mx-auto">
       <div>
         <img
-          className="w-16 mb-8"
-          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQYQy-OIkA6In0fTvVwZADPmFFibjmszu2A0g&s"
+          className="w-20 mb-8"
+          src="/images/uber-logo.svg"
           alt="Uber"
         />
 

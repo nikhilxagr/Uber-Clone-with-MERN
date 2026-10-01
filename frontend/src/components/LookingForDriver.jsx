@@ -13,8 +13,14 @@ const LookingForDriver = (props) => {
 
       <div className="flex gap-2 justify-between flex-col items-center">
         <img
-          className="h-20 object-contain animate-pulse"
-          src="https://swyft.pl/wp-content/uploads/2023/05/how-many-people-can-a-uberx-take.jpg"
+          className="h-20 object-contain rounded-xl animate-pulse"
+          src={
+            props.vehicleType === "moto"
+              ? "/images/uber-moto.jpg"
+              : props.vehicleType === "auto"
+              ? "/images/uber-auto.jpg"
+              : "/images/uber-go.jpg"
+          }
           alt="Vehicle"
         />
         <div className="w-full mt-5">

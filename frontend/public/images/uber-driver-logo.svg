@@ -1,0 +1,8 @@
+<svg width="200" height="56" viewBox="0 0 200 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Uber Bold Wordmark -->
+  <text x="0" y="38" font-family="Plus Jakarta Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="38" fill="#000000" letter-spacing="-1.5">Uber</text>
+  
+  <!-- Driver Pill Badge -->
+  <rect x="96" y="14" width="76" height="28" rx="8" fill="#000000" />
+  <text x="134" y="32.5" font-family="Plus Jakarta Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="12" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">DRIVER</text>
+</svg>
